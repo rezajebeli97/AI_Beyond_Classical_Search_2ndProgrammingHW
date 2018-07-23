@@ -3,7 +3,11 @@
 
 import java.util.ArrayList;
 
+
 public class Search {
+	int observedNodesRandomRestart=0 , extendedNodesRandomRestart=0;
+	ArrayList<State> myPathRandomRestart;
+	ArrayList<Action> myActionsRandomRestart;
 
 	public void simulatedAnealing(Problem problem) {
 		final long maxTime = 500;
@@ -235,11 +239,17 @@ public class Search {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	public void hillClimbing_randomRestart(Problem problem) {
-		State initialState = problem.initialState();
+		ArrayList<State> initialStates = problem.initialStates();
 		ArrayList<State> finalStates = new ArrayList<State>();
+		int maxTries = 10;
 
-		while (true) {
-			State finalState = hillClimbing_withConstantIntialState(problem, initialState, finalStates);
+		for (int i = 0; i < 10; i++){
+			State finalState = hillClimbing_withConstantIntialState(problem, initialStates.get(i%initialStates.size()), finalStates);
+			System.out.println("finalState["+i+"]: " + problem.f(finalState));
+			if (problem.f(finalState) == problem.fValueForFinalState()) {
+				printDetailsHillClimbing(problem, observedNodesRandomRestart, extendedNodesRandomRestart, myPathRandomRestart, myActionsRandomRestart);
+				return;
+			}
 			finalStates.add(finalState);
 		}
 
@@ -247,11 +257,11 @@ public class Search {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private State hillClimbing_withConstantIntialState(Problem problem, State p, ArrayList<State> finalStates) {
-		ArrayList<State> myPath = new ArrayList<State>();
-		ArrayList<Action> myActions = new ArrayList<Action>();
-		myPath.add(p);
-		int observedNodes = 1;
-		int extendedNodes = 0;
+		myPathRandomRestart = new ArrayList<State>();
+		myActionsRandomRestart = new ArrayList<Action>();
+		myPathRandomRestart.add(p);
+		 observedNodesRandomRestart = 1;
+		 extendedNodesRandomRestart = 0;
 		while (true) {
 			ArrayList<Action> actions = problem.actions(p);
 			State bestNeighbour = p;
@@ -260,7 +270,7 @@ public class Search {
 			for (int i = 0; i < actions.size(); i++) { // find best neighbour which has minimum f value
 				State neighbour = problem.result(p, actions.get(i));
 				double neighbourWorth = problem.f(neighbour);
-				observedNodes++;
+				observedNodesRandomRestart++;
 				if (neighbourWorth < minCost) {
 					minCost = neighbourWorth;
 					bestNeighbour = neighbour;
@@ -271,14 +281,14 @@ public class Search {
 				break;
 			}
 			p = bestNeighbour;
-			extendedNodes++;
-			myPath.add(bestNeighbour);
-			myActions.add(bestAction);
+			extendedNodesRandomRestart++;
+			myPathRandomRestart.add(bestNeighbour);
+			myActionsRandomRestart.add(bestAction);
 		}
 
 		for (State state : finalStates) {
 			if (problem.equal(state, p)) {
-				printDetailsHillClimbing(problem, observedNodes, extendedNodes, myPath, myActions);
+				printDetailsHillClimbing(problem, observedNodesRandomRestart, extendedNodesRandomRestart, myPathRandomRestart, myActionsRandomRestart);
 				System.exit(0);
 			}
 		}
@@ -289,11 +299,12 @@ public class Search {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	public void geneticSearch(Problem problem) {
+		int counter = 0;
 		ArrayList<State> population = problem.initialStates();
 		int n = population.size(); // n = my population size
-		int m = population.size() / 2; // number of children in every reproduction (the value is optional)
+		int m =50; // number of children in every reproduction (the value is optional)
 		double mutationPropability = 0.5;
-		double maxTime = 300;
+		double maxTime = 3000;
 
 		ArrayList<ArrayList<State>> myPath = new ArrayList<ArrayList<State>>();
 		ArrayList<double[]> bestWorstAverage = new ArrayList<double[]>();
@@ -303,9 +314,9 @@ public class Search {
 
 		double t0 = System.currentTimeMillis();
 		double t = 0;
-		while (t < maxTime) { // فقط یه چیزو چک کن که با تغییر پی مقادیر قبلی پی که ریخته بودم تو اری لیست مای
+		while (t < maxTime && counter<99) { // فقط یه چیزو چک کن که با تغییر پی مقادیر قبلی پی که ریخته بودم تو اری لیست مای
 								// پف عوض میشه یا نه
-
+counter++;
 			ArrayList<State> children = makesChildren(problem, population, m, mutationPropability); // each 2 states are
 																									// near in index ,
 																									// are couple
